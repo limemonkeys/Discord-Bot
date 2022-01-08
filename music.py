@@ -7,6 +7,7 @@ import re
 
 
 queue = []
+current_song = None;
 
 class music(commands.Cog):
   def __init__(self, client):
@@ -34,6 +35,7 @@ class music(commands.Cog):
 
   @commands.command()
   async def play(self, ctx, *search_keyword):
+    global current_song
     search_keyword_stitched = "+".join(search_keyword)
 
     voice_channel = ctx.author.voice.channel
@@ -44,7 +46,7 @@ class music(commands.Cog):
     print("Checking if audio already playing")
     print()
     # Stop any song currently being played when one is requested
-    # ctx.voice_client.stop()
+    ctx.voice_client.stop()
     # Standard preferences
     FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
     # Play in best audio format
@@ -55,10 +57,12 @@ class music(commands.Cog):
       info = None;
       if "https://www.youtube.com/watch?v=" not in search_keyword_stitched:
         ytSearch = searchYT(search_keyword_stitched)
+        current_song = ytSearch
         info = ydl.extract_info(ytSearch, download = False)
         await ctx.send("> Playing the following YouTube video: " + ytSearch)
       else:
         info = ydl.extract_info(search_keyword_stitched, download = False)
+        current_song = search_keyword_stitched
         await ctx.send("> Playing the following YouTube video: " + search_keyword_stitched)
       url2 = info['formats'][0]['url']
       source = await discord.FFmpegOpusAudio.from_probe(url2, **FFMPEG_OPTIONS)
@@ -66,9 +70,23 @@ class music(commands.Cog):
         vc.play(source)
       else: 
         queue.append(source)
-        print(queue)
 
-      
+  @commands.command()
+  async def seek(self, ctx, timestamp): 
+    if current_song is None:
+      await ctx.send("> There is no music playing!")
+    else:
+      ctx.voice_client.stop()
+
+      FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn -ss ' + timestamp}
+      YDL_OPTIONS = {'format':'bestaudio'}
+      with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
+        vc = ctx.voice_client
+        info = ydl.extract_info(current_song, download = False)
+        url2 = info['formats'][0]['url']
+        source = await discord.FFmpegOpusAudio.from_probe(url2, **FFMPEG_OPTIONS)
+        vc.play(source)
+
       
 
   @commands.command()
