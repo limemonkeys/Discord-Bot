@@ -1,18 +1,21 @@
-# Base Code Citation: https://www.youtube.com/watch?v=jHZlvRr9KxM
-import discord
-from discord.ext import commands
-import youtube_dl
-import urllib.request
-import re
-import asyncio
-
+#Combined music.py and main.py
 
 queue = []
+cog = []
 current_song = None;
+
+client = commands.Bot(command_prefix='!',intents=discord.Intents.all())
 
 class music(commands.Cog):
   def __init__(self, client):
     self.client = client
+    #self.loop = asyncio.new_event_loop()
+
+  @client.event
+  async def on_ready():
+    # TODO: Add asyncio or await to check if playing every 15 seconds
+    # Add either here OR in join. I'd recommend join.
+    print("Bot online")
 
   @commands.command()
   async def join(self, ctx):
@@ -63,13 +66,21 @@ class music(commands.Cog):
         try:
           vc = ctx.voice_client
           url2 = info['formats'][0]['url']
+          '''
+          loop = asyncio.get_event_loop()
+          loop.create_task(play_next(ctx))
+          vc.play(discord.FFmpegPCMAudio(source=url2), after=lambda e: loop) 
+          '''
           vc.play(discord.FFmpegPCMAudio(source=url2), after=lambda e: play_next(ctx))
+          print("Done queue")
         except:
           queue.append(search_keyword_stitched)
           print("Audio not playing, but in process")
           return
       else:
         queue.append(search_keyword_stitched)
+        return
+    
     
     
 
@@ -98,6 +109,32 @@ class music(commands.Cog):
     #ctx.voice_client.stop()
     ctx.voice_client.stop()
 
+
+  @commands.command()
+  async def seek(self, ctx, timestamp):
+
+    if current_song is None:
+      await ctx.send("> There is no music playing!")
+    elif timestamp is None:
+      await ctx.send("> Please enter a timestamp!")
+    else:
+      ctx.voice_client.stop()
+
+      FFMPEG_OPTIONS = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn -ss ' + timestamp}
+      YDL_OPTIONS = {'format':'bestaudio'}
+      with youtube_dl.YoutubeDL(YDL_OPTIONS) as ydl:
+        vc = ctx.voice_client
+        info = ydl.extract_info(current_song, download = False)
+        try:
+          vc = ctx.voice_client
+          url2 = info['formats'][0]['url']
+          source = await discord.FFmpegOpusAudio.from_probe(url2, **FFMPEG_OPTIONS)
+          vc.play(source, after=lambda e: play_next(ctx))
+        except:
+          await ctx.send("> Error seeking, sorry... :confused:")
+
+  
+
       
     
 
@@ -114,7 +151,6 @@ def play_next(ctx):
     global current_song, queue
     print("IN NEXT")
     if len(queue) > 0:
-      YDL_OPTIONS = {'format':'bestaudio'}
       search_keyword_stitched = queue.pop()
       current_song = search_keyword_stitched
       
@@ -123,4 +159,25 @@ def play_next(ctx):
         info = ydl.extract_info(search_keyword_stitched, download = False)
         vc = ctx.voice_client
         url2 = info['formats'][0]['url']
+        '''
+        loop = asyncio.get_event_loop()
+        loop.create_task(play_next(ctx))
+        vc.play(discord.FFmpegPCMAudio(source=url2), after=lambda e: loop)
+        '''
         vc.play(discord.FFmpegPCMAudio(source=url2), after=lambda e: play_next(ctx))
+    else:
+      return
+    '''
+    else:
+      await ctx.send("> Bye!")
+      await ctx.voice_client.disconnect()
+    '''
+
+      
+      
+
+
+
+
+cog.append(setup(client))
+client.run("OTI4MTQ2MzUwNDMwODg4MDM1.YdUhpg.GotR5GqcATkzeHuf9yNXFlsEtGs")
