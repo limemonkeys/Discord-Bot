@@ -32,7 +32,7 @@ class music(commands.Cog):
     global beginning_check
     # If command is being called by user not in a voice channel.
     if ctx.author.voice is None:
-      await ctx.send("You cannot issue voice commands outside of a voice channel.")
+      await ctx.send("> You cannot issue voice commands outside of a voice channel.")
     voice_channel = ctx.author.voice.channel
     # If bot is not already in a channel
     if ctx.voice_client is None:
@@ -48,73 +48,16 @@ class music(commands.Cog):
     #await ctx.voice_client.stop()
     #await ctx.voice_client.disconnect()
     
-    voice_channel = ctx.author.voice.channel
-    if ctx.voice_client is None:
-      await voice_channel.connect()
-    await ctx.send("> Bye!")
-    await ctx.voice_client.disconnect()
-
-  @commands.command()
-  async def play(self, ctx, *search_keyword):
-    global bot_is_inactive
-    global current_song, queue, beginning_check
-    search_keyword_stitched = "+".join(search_keyword)
-
-# Base Code Citation: https://www.youtube.com/watch?v=jHZlvRr9KxM
-import discord
-from discord.ext import commands
-import youtube_dl
-import urllib.request
-import re
-import asyncio
-
-
-queue = []
-cog = []
-current_song = None
-beginning_check = False
-bot_is_inactive = False
-
-client = commands.Bot(command_prefix='!',intents=discord.Intents.all())
-
-class music(commands.Cog):
-  def __init__(self, client):
-    self.client = client
-    #self.loop = asyncio.new_event_loop()
-
-  @client.event
-  async def on_ready():
-    # TODO: Add asyncio or await to check if playing every 15 seconds
-    # Add either here OR in join. I'd recommend join.
-    print("Bot online")
-    
-
-  @commands.command()
-  async def join(self, ctx):
-    global beginning_check
-    # If command is being called by user not in a voice channel.
     if ctx.author.voice is None:
-      await ctx.send("You cannot issue voice commands outside of a voice channel.")
-    voice_channel = ctx.author.voice.channel
-    # If bot is not already in a channel
-    if ctx.voice_client is None:
-      await voice_channel.connect()
-    # Otherwise, move to voice channel command is called
+      await ctx.send("> You cannot issue voice commands outside of a voice channel.")
+    elif ctx.voice_client is None:
+      await ctx.send("> You can't disconnect me. I'm not in a channel!")
+    elif not ctx.author.voice.channel == ctx.voice_client.channel:
+      await ctx.send("> You can't disconnect me. You're not in the same channel!")
     else:
-      await ctx.voice_client.move_to(voice_channel)
-    beginning_check = True
-    await check_bot_activity(ctx, 15)
-
-  @commands.command()
-  async def disconnect(self, ctx):
-    #await ctx.voice_client.stop()
-    #await ctx.voice_client.disconnect()
+      await ctx.send("> Bye!")
+      await ctx.voice_client.disconnect()
     
-    voice_channel = ctx.author.voice.channel
-    if ctx.voice_client is None:
-      await voice_channel.connect()
-    await ctx.send("> Bye!")
-    await ctx.voice_client.disconnect()
 
   @commands.command()
   async def play(self, ctx, *search_keyword):
@@ -144,12 +87,8 @@ class music(commands.Cog):
           try:
             vc = ctx.voice_client
             url2 = info['formats'][0]['url']
-            '''
-            loop = asyncio.get_event_loop()
-            loop.create_task(play_next(ctx))
-            vc.play(discord.FFmpegPCMAudio(source=url2), after=lambda e: loop) 
-            '''
             vc.play(discord.FFmpegPCMAudio(source=url2), after=lambda e: play_next(ctx))
+            await ctx.send("> Playing the following YouTube video: " + search_keyword_stitched)
             print("Done queue")
           except:
             queue.append(search_keyword_stitched)
@@ -239,7 +178,6 @@ async def check_bot_activity(ctx, seconds):
     print("Issues with ctx.voice_client.is_playing()")
     return
   
-
     
 
 def setup(client):
@@ -271,20 +209,9 @@ def play_next(ctx):
         vc.play(discord.FFmpegPCMAudio(source=url2), after=lambda e: play_next(ctx))
     else:
       return
-    '''
-    else:
-      await ctx.send("> Bye!")
-      await ctx.voice_client.disconnect()
-    '''
-
-      
-      
-
-
 
 
 cog.append(setup(client))
 client.run("BOT TOKEN")
 
-    
-        
+     
