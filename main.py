@@ -180,4 +180,4 @@ def play_next(ctx):
 
 
 cog.append(setup(client))
-client.run("OTI4MTQ2MzUwNDMwODg4MDM1.YdUhpg.GotR5GqcATkzeHuf9yNXFlsEtGs")
+client.run("BOT TOKEN")
