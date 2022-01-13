@@ -193,7 +193,7 @@ def play_next(ctx):
     global current_song, queue
     print("IN NEXT")
     if len(queue) > 0:
-      search_keyword_stitched = queue.pop()
+      search_keyword_stitched = queue.pop(0)
       current_song = search_keyword_stitched
       
       YDL_OPTIONS = {'format':'bestaudio'}
